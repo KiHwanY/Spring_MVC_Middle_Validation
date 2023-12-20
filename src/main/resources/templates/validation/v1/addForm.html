@@ -23,10 +23,21 @@
     </div>
 
     <form action="item.html" th:action th:object="${item}" method="post">
-
+        <!--errors?.containsKey 검색해보기 -->
         <div th:if="${errors?.containsKey('globalError')}">
             <p class="field-error" th:text="${errors['globalError']}">전체 오류 메시지</p>
         </div>
+
+        <!--
+            참고 Safe Navigation Operator
+
+           -> 만약 여기에서 errors가 null 이라면 어떻게 될까?
+           생각해보면 등록 폼에 진입한 시점에는 errors가 없다.
+           따라서 errors.containsKey()를 호출하는 순간 NullPointException 이 발생한다.
+
+           errors?. 은 errors가 null일때 NullPointException 이 발생하는 대신, null을 반환하는 문법이다.
+           th:if 에서 null 은 실패로 처리되므로 오류 메시지가 줄력되지 않는다.
+        -->
 
         <div>
             <label for="itemName" th:text="#{label.item.itemName}">상품명</label>
