@@ -50,10 +50,47 @@ public class ValidationItemControllerV2 {
         model.addAttribute("item", new Item());
         return "validation/v2/addForm";
     }
+//    BindingResult = 바인딩된 결과
+//    BindingResult bindingResult 파라미터 위치는 @ModelAttribute Item item 다음에 와야 한다.
 
-//    @PostMapping("/add")
+    /*BindingResult란 ?
+    *
+    * BindingResult는 스프링이 제공하는 값 검증 오류 처리의 핵심이다.
+    * BindingResult는 스프링이 제공하는 검증 오류를 보관하는 객채이기 때문이고, 데이터 유효성 검사를 실패하면 ConstraintViolationException을 발생시키는데,
+    * 데이터가 유효하지 않은 속성이 있으면 그에 대한 에러 정보를 BindingResult에 담는다.
+    *
+    * 정상적인 동작에서는 BindingResult에 담은 오류 정보를 가지고 Controller를 호출한다.
+    * 하지만 BindingResult가 없다면 4xx 오류가 발생하면서 컨트롤러가 호출되지 않고 오류 페이지로 이동하게 된다.
+    *
+    * BindingResult 메서드를 사용하는 방식은 다음과 같다.
+    *
+    * boolean hasErrors() : 에러의 유무를 판단한다.
+    * boolean hasGlobalErrors() : 글로벌 에러의 유무를 판단한다.
+    * void addError(ObjectError error) : field, type, value 등의 에러를 출력할 수 있다.
+    * void rejectValue() : field , errorCode, defaultMessage 등을 받아서 reject 됐을 대 데이터를 넘길 수 있다.
+    *
+    * [주로 전달하는 파라미터]
+    *
+    * objectName : 오류가 발생한 객체의 이름
+    * field : 오류 필드
+    * rejectValue : 사용자가 입력한 값(거절된 값)
+    * bindingFailure : 타입 오류 같은 바인딩 실패인지, 검증 실패인지 구분 값
+    * codes : 메시지 코드
+    * arguments : 메시지에서 사용하는 인자
+    * defaultMessage : 기본 오류 메시지
+    * */
+
+
+    @PostMapping("/add")
     public String addItemV1(@ModelAttribute Item item, BindingResult bindingResult, RedirectAttributes redirectAttributes, Model model) {
-
+//      FieldError 생성자 요약
+//      public FieldError(String objectName , String field , String defaultMessage){}
+//      필드에 오류가 있으면 FieldError 객체를 생성해서 bindingResult에 담아두면 된다.
+        /*
+        * objectName : @ModelAttribute 이름
+        * field : 오류가 발생한 필드 이름
+        * defaultMessages : 오류 기본 메시지
+        * */
         //검증 로직
         if (!StringUtils.hasText(item.getItemName())) {
             bindingResult.addError(new FieldError("item", "itemName", "상품 이름은 필수 입니다."));
@@ -70,9 +107,20 @@ public class ValidationItemControllerV2 {
             int resultPrice = item.getPrice() * item.getQuantity();
             if (resultPrice < 10000) {
                 bindingResult.addError(new ObjectError("item", "가격 * 수량의 합은 10,000원 이상이어야 합니다. 현재 값 = " + resultPrice));
+                // 필드가 없기 때문에 ObjectError를 생성해서 해줘야 한다.
             }
+            /* ObjectError 생성자 요약
+            * public ObjectError(String objectName ,  String defaultMessage) {}
+            *
+            * 특정 필드를 넘어서는 오류가 있으면 ObjectError 객체를 생성해서 bindingResult 에 담아두면 된다.
+            * objectName : @ModelAttribute 의 이름
+            * defaultMessages : 오류 기본 메시지
+            *
+            * FieldError 객체는 ObjectError 객체의 자식 타입이다.
+            * */
         }
-
+        //bindingResult.hasErrors() -> bindingResult가 에러가 있으면 ?
+        //model 에 안담아도 알아서 Spring 처리 해준다.
         //검증에 실패하면 다시 입력 폼으로
         if (bindingResult.hasErrors()) {
             log.info("errors={} ", bindingResult);
