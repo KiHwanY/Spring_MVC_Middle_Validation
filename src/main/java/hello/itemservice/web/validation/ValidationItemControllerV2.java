@@ -134,7 +134,7 @@ public class ValidationItemControllerV2 {
         return "redirect:/validation/v2/items/{itemId}";
     }
 
-    @PostMapping("/add")
+  //  @PostMapping("/add")
     public String addItemV2(@ModelAttribute Item item, BindingResult bindingResult, RedirectAttributes redirectAttributes, Model model) {
 
         //검증 로직
@@ -193,6 +193,19 @@ public class ValidationItemControllerV2 {
 //    @PostMapping("/add")
     public String addItemV3(@ModelAttribute Item item, BindingResult bindingResult, RedirectAttributes redirectAttributes, Model model) {
 
+        /*
+        * [FieldError 생성자]
+        *
+        * FieldError 는 두 가지 생성자를 제공한다.
+        * public FieldError(String objectName, String field, String defaultMessage);
+          public FieldError(String objectName, String field, @Nullable Object rejectedValue, boolean bindingFailure, @Nullable String[] codes, @Nullable
+          Object[] arguments, @Nullable String defaultMessage)
+
+          FieldError, ObjectError 의 생성자는 codes,arguments 를 제공한다. 이것은 오류 발생시 오류 코드로 메시지를 찾기 위해 사용된다.
+
+        * */
+
+
         //검증 로직
         if (!StringUtils.hasText(item.getItemName())) {
             bindingResult.addError(new FieldError("item", "itemName", item.getItemName(), false, new String[]{"required.item.itemName"}, null, null));
@@ -203,6 +216,17 @@ public class ValidationItemControllerV2 {
         if (item.getQuantity() == null || item.getQuantity() >= 9999) {
             bindingResult.addError(new FieldError("item", "quantity", item.getQuantity(), false, new String[]{"max.item.quantity"} ,new Object[]{9999}, null));
         }
+
+        /*
+        *  [error 메시지 파일 생성]
+        * messages.properties 를 사용해도 되지만, 오류 메시지를 구분하기 쉽게 errors.properties 라는 별도의 파일로 관리하고 있다.
+        *
+        * 먼저 스프링 부트가 해당 메시지 파일을 인식할 수 있게 다음 설정을 추가한다.
+        * {application.properties}
+        * spring.messages.basename=messages,errors
+        *
+        * 이렇게 하면 messages.properties , errors.properties 두 파일을 모두 인식한다.(생략하면 messages.properties를 기본으로 인식한다.)
+        * */
 
         //특정 필드가 아닌 복합 룰 검증
         if (item.getPrice() != null && item.getQuantity() != null) {
@@ -225,11 +249,45 @@ public class ValidationItemControllerV2 {
         return "redirect:/validation/v2/items/{itemId}";
     }
 
+    /*
+    * [목표]
+    * FieldError, ObjectError 는 다루기 너무 번거롭다.
+    * 오류 코드도 좀 더 자동화 할 수 있지 않을까? ex) item.itemName처럼?
+    *
+    * Controller 에서 BindingResult 는 검증해야 할 객체인 target 바로 다음에 온다.
+    * 따라서 BindingResult 는 이미 본인이 검증해야 할 객체인 target 을 알고 있다.
+    * */
+
 //    @PostMapping("/add")
     public String addItemV4(@ModelAttribute Item item, BindingResult bindingResult, RedirectAttributes redirectAttributes, Model model) {
 
         log.info("objectName={}", bindingResult.getObjectName());
         log.info("target={}", bindingResult.getTarget());
+        /*
+        * [rejectValue(), reject()]
+        *
+        * BindingResult 가 제공하는 rejectValue(), reject()를 사용하면 FieldError, ObjectError 를 직접 생성하지 않고, 깔끔하게 검증 오류를 다룰 수 있다.
+        *
+        * [rejectValue()]
+        * void rejectValue(@Nullable String field, String errorCode, @Nullable Object[] errorArgs, @Nullable String defaultMessage);
+        *
+        * field : 오류 필드명
+        * errorCode : 오류 코드(이 오류 코드는 메시지에 등록된 코드가 아니다. 뒤에서 설명할 messageResolver 를 위한 오류 코드이다.)
+        * errorArgs : 오류 메시지에서 {0} 을 치환하기 위한 값
+        * defaultMessage : 오류 메시지를 찾을 수 없을 때 사용하는 기본 메시지
+        *
+        * ex )
+        * bindingResult.rejectValue("price", "range", new Object[]{1000, 1000000}, null)
+        *
+        * 앞에서 BindingResult 는 어떤 객체를 대상으로 검증하는지 target 을 이미 알고 있다고 했다. 따라서 target(item) 에 대한 정보는 없어도 된다.
+        * 오류 필드명은 동일하게 price 를 사용했다.
+        *
+        * [축약된 오류 코드]
+        * FieldError()를 직접 다룰 때는 오류 코드를 range.item.price 와 같이 모두 입력했다. 그런데 rejectValue()를 사용하고 부터는
+        * 오류 코드를 range 로 간단하게 입력했다. 그래도 오류 메시지를 잘 찾아서 출력한다. 무언가 규칙이 있는 것 처럼 보인다.
+        *
+        * 이 부분을 이해하려면 MessageCodesResolver를 이해해야 한다. 왜 이런식으로 오류 코드를 구성하는지 바로 다음에 자세히 알아보자.
+        * */
 
         if (!StringUtils.hasText(item.getItemName())) {
             bindingResult.rejectValue("itemName", "required");
