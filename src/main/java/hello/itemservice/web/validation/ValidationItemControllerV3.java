@@ -43,7 +43,7 @@ public class ValidationItemControllerV3 {
         model.addAttribute("item", new Item());
         return "validation/v3/addForm";
     }
-
+//    @ModelAttribute -> 각각의 필드 타입 변환시도 -> 변환에 성공한 필드만 BeanValidation 적용
 //    @PostMapping("/add")
     public String addItem(@Validated @ModelAttribute Item item, BindingResult bindingResult, RedirectAttributes redirectAttributes, Model model) {
 

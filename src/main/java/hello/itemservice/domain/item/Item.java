@@ -31,12 +31,38 @@ public class Item {
     @NotNull(groups = UpdateCheck.class) //수정 요구사항 추가
     private Long id;
 
+    /*
+    *  [Bean Validation - 에러 코드]
+    *
+    *  Bean Validation 이 기본으로 제공하는 오류 메시지를 좀 더 자세히 변경하고 싶으면 어떻게 하면 될까 ?
+    *
+    *  Bean Validation 을 적용하고 'bindingResult' 에 등록된 검증 오류 코드를 보자.
+    *  오류 코드가 애노테이션 이름으로 등록된다. 마치 'typeMismatch' 와 유사하다.
+    *
+    *  'NotBlank' 라는 오류 코드를 기반으로 'MessageCodesResolver' 를 통해 다양한 메시지 코드가 순서대로 생성된다.
+    * */
+
     @NotBlank(groups = {SaveCheck.class, UpdateCheck.class})
     private String itemName;
-
+    /*
+    *  [@NotBlank]`
+    *  - NotBlank.item.itemName
+    *  - NotBlank.itemName
+    *  - NotBlank.java.lang.String
+    *  - NonBlank
+    *  -> 우선 순위
+    * */
     @NotNull(groups = {SaveCheck.class, UpdateCheck.class})
     @Range(min = 1000, max = 1000000, groups = {SaveCheck.class, UpdateCheck.class})
     private Integer price;
+    /*
+     *  [@Range]
+     *  - Range.item.price
+     *  - Range.price
+     *  - Range.java.lang.Integer
+     *  - Range
+     *  -> 우선 순위
+     * */
 
     @NotNull(groups = {SaveCheck.class, UpdateCheck.class})
     @Max(value = 9999, groups = {SaveCheck.class})
