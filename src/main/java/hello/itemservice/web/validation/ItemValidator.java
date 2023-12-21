@@ -6,12 +6,21 @@ import org.springframework.util.StringUtils;
 import org.springframework.validation.Errors;
 import org.springframework.validation.Validator;
 
+
+// spring bean 등록
 @Component
 public class ItemValidator implements Validator {
+    /*
+    *  supports() {} : 해당 검증기를 지원하는 여부 확인
+    *  validate(Object target, Errors errors) : 검증 대상 객체와 BindingResult
+    * */
 
     @Override
     public boolean supports(Class<?> clazz) {
         return Item.class.isAssignableFrom(clazz);
+        // item == clazz
+        // item = subItem
+
     }
 
     @Override
